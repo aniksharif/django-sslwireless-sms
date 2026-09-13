@@ -1,5 +1,10 @@
 # django-sslwireless-sms
 
+[![PyPI](https://img.shields.io/pypi/v/django-sslwireless-sms?style=for-the-badge&logo=python&logoColor=white&label=PyPI&color=2e6b45)](https://pypi.org/project/django-sslwireless-sms/)
+[![CI](https://img.shields.io/github/actions/workflow/status/aniksharif/django-sslwireless-sms/publish.yml?branch=main&style=for-the-badge&logo=github&logoColor=white&label=CI)](https://github.com/aniksharif/django-sslwireless-sms/actions/workflows/publish.yml)
+[![Python](https://img.shields.io/pypi/pyversions/django-sslwireless-sms?style=for-the-badge&logo=python&logoColor=white&label=Python&color=2e6b45)](https://pypi.org/project/django-sslwireless-sms/)
+[![Django versions](https://img.shields.io/pypi/frameworkversions/django/django-sslwireless-sms?style=for-the-badge&logo=django&logoColor=white&label=Django%20versions&color=2e6b45)](https://pypi.org/project/django-sslwireless-sms/)
+
 Django integration for the [SSL Wireless ISMS Plus SMS API v3](https://ismsplus.sslwireless.com/api-documentation).
 
 | Function           | Endpoint                 | Use for                                           |
