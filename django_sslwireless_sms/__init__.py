@@ -21,7 +21,7 @@ from .exceptions import (
 )
 from .results import SendResult, SMSInfo, SMSStatus, StatusCode
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     "AuthenticationError",
