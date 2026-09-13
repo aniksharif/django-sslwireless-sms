@@ -14,7 +14,7 @@ Requires Python 3.10+ and Django 4.2+.
 ## Installation
 
 ```bash
-pip install path/to/django-sslwireless-sms
+pip install django-sslwireless-sms
 ```
 
 ```python
