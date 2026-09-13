@@ -170,6 +170,18 @@ uv run pytest -m integration   # sends real SMS to SSLWIRELESS_SMS_TEST_MSISDN (
 
 Run the tests from a whitelisted IP.
 
+### Releasing
+
+Every push to `main` runs [`.github/workflows/publish.yml`](.github/workflows/publish.yml):
+
+1. Runs the unit tests on Python 3.10 with Django 4.2 and on Python 3.14 with Django 6.1.
+2. Builds the package and checks it with `twine check`.
+3. Checks PyPI for `__version__` from `django_sslwireless_sms/__init__.py`. If that version isn't
+   there yet, it uploads to TestPyPI and then PyPI using trusted publishing. Otherwise it skips
+   publishing.
+
+To release, bump `__version__` and push to `main`.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

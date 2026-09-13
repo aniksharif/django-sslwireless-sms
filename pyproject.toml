@@ -33,6 +33,9 @@ dependencies = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/aniksharif/django-sslwireless-sms"
+Repository = "https://github.com/aniksharif/django-sslwireless-sms"
+Issues = "https://github.com/aniksharif/django-sslwireless-sms/issues"
 "API documentation" = "https://ismsplus.sslwireless.com/api-documentation"
 
 [dependency-groups]

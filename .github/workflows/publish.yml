@@ -1,0 +1,130 @@
+name: Publish
+
+# Every push to main runs the tests and builds the package. It is published to
+# TestPyPI and then PyPI only when __version__ is not on PyPI yet, so pushes
+# without a version bump skip publishing.
+#
+# Trusted publishers on pypi.org and test.pypi.org must use this workflow
+# filename (publish.yml) and the environments "pypi" and "testpypi".
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python }}, Django ${{ matrix.django }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.10"
+            django: "4.2"
+          - python: "3.14"
+            django: "6.1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: false
+      - name: Install dependencies
+        env:
+          DJANGO_VERSION: ${{ matrix.django }}
+        run: |
+          uv sync --locked
+          uv pip install "django~=${DJANGO_VERSION}.0"
+      - name: Run unit tests
+        run: uv run --no-sync pytest
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.version.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: false
+      - name: Build
+        run: uv build
+      - name: Check distributions
+        run: uvx twine check dist/*
+      - name: Decide whether to publish
+        id: version
+        run: |
+          version=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' django_sslwireless_sms/__init__.py)
+          test -f "dist/django_sslwireless_sms-${version}-py3-none-any.whl"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/django-sslwireless-sms/${version}/json")
+          case "$status" in
+            404)
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::Publishing django-sslwireless-sms ${version}" ;;
+            200)
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::Version ${version} is already on PyPI, so publishing is skipped. Bump __version__ to release." ;;
+            *)
+              echo "::error::Could not check PyPI for version ${version} (HTTP ${status})"
+              exit 1 ;;
+          esac
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/django-sslwireless-sms/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # Lets a re-run continue to PyPI if TestPyPI already has this version.
+          skip-existing: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build, publish-testpypi]
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/django-sslwireless-sms/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
