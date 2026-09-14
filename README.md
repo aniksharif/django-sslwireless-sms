@@ -42,6 +42,11 @@ SSLWIRELESS_SMS = {
 
 The API only accepts requests from IPs whitelisted in the ISMS Plus portal.
 
+Adding the app registers a system check that warns when `API_TOKEN` or `SID` is missing
+(`django_sslwireless_sms.W001`). It is a warning, not an error, so a project without credentials
+still runs — sending is what fails. Silence it with
+`SILENCED_SYSTEM_CHECKS = ["django_sslwireless_sms.W001"]`.
+
 ## Usage
 
 ```python
@@ -150,42 +155,6 @@ class SignupTests(TestCase):
 ```
 
 For local development, set `"BACKEND": "django_sslwireless_sms.backends.console.ConsoleBackend"`.
-
-## Development
-
-```bash
-uv sync
-uv run pytest                  # unit tests; HTTP is mocked, nothing leaves the machine
-```
-
-The unit tests mock HTTP with [`responses`](https://github.com/getsentry/responses) and check
-request payloads against the API documentation. The OTP encryption and signature are compared
-with known-answer vectors from the official Python and Node.js samples.
-
-Integration tests call the real API and are deselected by default:
-
-```bash
-uv run pytest -m integration   # without credentials: only checks that a bad token is rejected
-
-export SSLWIRELESS_SMS_API_TOKEN=... SSLWIRELESS_SMS_SID=... SSLWIRELESS_SMS_TEST_MSISDN=8801XXXXXXXXX
-export SSLWIRELESS_SMS_SECRET_KEY=...  # optional, enables the OTP test
-export SSLWIRELESS_SMS_BASE_URL=...    # optional, overrides the default API host
-uv run pytest -m integration   # sends real SMS to SSLWIRELESS_SMS_TEST_MSISDN (uses credit)
-```
-
-Run the tests from a whitelisted IP.
-
-### Releasing
-
-Every push to `main` runs [`.github/workflows/publish.yml`](.github/workflows/publish.yml):
-
-1. Runs the unit tests on Python 3.10 with Django 4.2 and on Python 3.14 with Django 6.1.
-2. Builds the package and checks it with `twine check`.
-3. Checks PyPI for `__version__` from `django_sslwireless_sms/__init__.py`. If that version isn't
-   there yet, it uploads to TestPyPI and then PyPI using trusted publishing. Otherwise it skips
-   publishing.
-
-To release, bump `__version__` and push to `main`.
 
 ## License
 

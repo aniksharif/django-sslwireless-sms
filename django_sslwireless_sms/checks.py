@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from django.core.checks import CheckMessage, Error, register
+from django.core.checks import CheckMessage, Error, Warning, register
 from django.utils.module_loading import import_string
 
 from .backends.api import SSLWirelessBackend
@@ -24,10 +24,10 @@ def check_sslwireless_sms_settings(app_configs=None, **kwargs) -> list[CheckMess
         return []
 
     return [
-        Error(
-            f"SSLWIRELESS_SMS['{key}'] is not set.",
+        Warning(
+            f"SSLWIRELESS_SMS['{key}'] is not set; sending will fail.",
             hint="Copy it from the ISMS Plus portal, or use a locmem/console backend.",
-            id="django_sslwireless_sms.E002",
+            id="django_sslwireless_sms.W001",
         )
         for key in ("API_TOKEN", "SID")
         if not conf[key]

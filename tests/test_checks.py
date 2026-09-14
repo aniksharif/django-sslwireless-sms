@@ -10,11 +10,16 @@ def test_valid_settings_pass():
 
 @override_settings(SSLWIRELESS_SMS={})
 def test_missing_credentials_are_reported():
-    errors = check_sslwireless_sms_settings()
+    messages = check_sslwireless_sms_settings()
 
-    assert [error.id for error in errors] == ["django_sslwireless_sms.E002", "django_sslwireless_sms.E002"]
-    assert "API_TOKEN" in errors[0].msg
-    assert "SID" in errors[1].msg
+    assert [message.id for message in messages] == ["django_sslwireless_sms.W001", "django_sslwireless_sms.W001"]
+    assert "API_TOKEN" in messages[0].msg
+    assert "SID" in messages[1].msg
+
+
+@override_settings(SSLWIRELESS_SMS={})
+def test_missing_credentials_do_not_block_management_commands():
+    assert not any(message.is_serious() for message in check_sslwireless_sms_settings())
 
 
 @override_settings(SSLWIRELESS_SMS={"BACKEND": "myproject.sms.MissingBackend"})
@@ -29,4 +34,4 @@ def test_simulated_backends_need_no_credentials():
 
 @override_settings(SSLWIRELESS_SMS={})
 def test_check_is_registered_with_django():
-    assert "django_sslwireless_sms.E002" in {message.id for message in checks.run_checks()}
+    assert "django_sslwireless_sms.W001" in {message.id for message in checks.run_checks()}
